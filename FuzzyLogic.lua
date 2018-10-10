@@ -1,6 +1,7 @@
 local family_list = {}
 
 local function parse_CSV()
+  -- by Ahmad Arsyel (1301164193)
   for line in io.lines("DataTugas2.csv") do
     local col1, col2, col3 = line:match("%i*(.-),%d*(.-),%d*(.*)") -- converting
     family_list[#family_list + 1] = {
