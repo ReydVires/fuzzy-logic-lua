@@ -40,13 +40,12 @@ local function table_to_CSV(path, data_table, sep)
   sep = sep or ','
   local file = assert(io.open(path, "w")) -- w mean write
   file:write("The 20 Selected Family:\n")
-  for _, v in pairs(data_table) do
-    file:write(v["family_id"] .. "," .. v["income"] .. "," .. v["charge"])
+  for _, v in ipairs(data_table) do
+    file:write(v)
     file:write('\n')
   end
   file:close()
-  print("Answer result:")
-  print_famtable(family_selected)
+  print("file saved")
 end
 
 -- @param a, b Returning the minimum value
@@ -100,47 +99,47 @@ end
 
 local function linguistic_var_charge(y)
   local curr_linguistic -- table that contain 4 key, saved in family_process.charge
-  if y <= 15 then
+  if y <= 20 then
     curr_linguistic = {
         f_state = "very low", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 15 and y < 25 then
+  elseif y > 20 and y < 30 then
     curr_linguistic = {
-        f_state = "very low", f_score = member_on_down(y, 15, 25),
-        s_state = "low", s_score = member_on_up(y, 15, 25)
+        f_state = "very low", f_score = member_on_down(y, 20, 30),
+        s_state = "low", s_score = member_on_up(y, 20, 30)
       }
-  elseif y >= 25 and y <= 35 then
+  elseif y >= 30 and y <= 50 then
     curr_linguistic = {
         f_state = "low", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 35 and y < 45 then
+  elseif y > 50 and y < 60 then
     curr_linguistic = {
-        f_state = "low", f_score = member_on_down(y, 35, 45),
-        s_state = "average", s_score = member_on_up(y, 35, 45)
+        f_state = "low", f_score = member_on_down(y, 50, 60),
+        s_state = "average", s_score = member_on_up(y, 50, 60)
       }
-  elseif y >= 45 and y <= 55 then
+  elseif y >= 60 and y <= 70 then
     curr_linguistic = {
         f_state = "average", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 55 and y < 65 then
+  elseif y > 70 and y < 80 then
     curr_linguistic = {
-        f_state = "average", f_score = member_on_down(y, 55, 65),
-        s_state = "high", s_score = member_on_up(y, 55, 65)
+        f_state = "average", f_score = member_on_down(y, 70, 80),
+        s_state = "high", s_score = member_on_up(y, 70, 80)
       }
-  elseif y >= 65 and y <= 75 then
+  elseif y >= 80 and y <= 85 then
     curr_linguistic = {
         f_state = "high", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 75 and y < 85 then
+  elseif y > 90 and y < 95 then
     curr_linguistic = {
-        f_state = "high", f_score = member_on_down(y, 75, 85),
-        s_state = "very high", s_score = member_on_up(y, 75, 85)
+        f_state = "high", f_score = member_on_down(y, 90, 95),
+        s_state = "very high", s_score = member_on_up(y, 90, 95)
       }
-  else -- if y >= 85 and y <= 100
+  else
     curr_linguistic = {
         f_state = "very high", f_score = 1,
         s_state = nil, s_score = nil
@@ -322,7 +321,7 @@ local function inference(tab_income, tab_charge)
 end
 
 local function defuzzification(acc, con, rej)
-  return (acc*100 + con*70 + rej*55)/(acc+con+rej)
+  return (acc*100 + con*75 + rej*50)/(acc+con+rej)
 end
 
 local function insertion_sort(tab)
@@ -347,7 +346,7 @@ local function fuzzy_logic()
   inference(family_process.income, family_process.charge)
   
   for i, v in ipairs(family_result) do
-    print(i .. ") SCORE:",defuzzification(family_result[i][1], family_result[i][2], family_result[i][3]))
+    print(i .. ") SCORE:", defuzzification(family_result[i][1], family_result[i][2], family_result[i][3]))
     table.insert(tab_goal, {id = i, score = defuzzification(family_result[i][1], family_result[i][2], family_result[i][3])})
   end
   
@@ -355,6 +354,10 @@ local function fuzzy_logic()
   
   for i, v in ipairs(tab_goal) do
     print(i .. ") " .. v.id, v.score)
+  end
+  
+  for i=1, 20 do -- saving data
+    table.insert(family_selected, tab_goal[i].id)
   end
 end
 
