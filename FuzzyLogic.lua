@@ -34,6 +34,7 @@ end
 
 -- @param path Use your own path for .csv raw file targeted
 -- @param data_table Saving file to .csv from table
+-- @param sep Separator of file
 local function table_to_CSV(path, data_table, sep)
   --relative path:/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv
   sep = sep or ','
@@ -62,7 +63,7 @@ local function member_on_up(x, on_low, to_top)
 end
 
 local function member_on_down(x, on_top, to_low)
-  return -(x-to_low/to_low-on_top)
+  return (to_low-x)/(to_low-on_top)
 end
 
 -- @param x Calculate number from crisp value
@@ -195,67 +196,129 @@ local function find_val(value, an_array, in_number)
 end
 
 local function inference(tab_income, tab_charge)
+  local inference_tab = {}
   local result = {}
   local fin_result = {
-    accepted = {},
-    consider = {},
-    rejected = {}
+    accepted = nil,
+    consider = nil,
+    rejected = nil
   }
   
   for i=1, #tab_income do
     result[1] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
-    print(">>>", result[1][1]) -- TODO: Not complete, apply for all
-    if (tab_income.s_state == nil and not tab_charge.s_state) then
-      result[2] = rules_analyzing(tab_income.f_state, tab_income.f_score, tab_charge.s_state, tab_charge.s_score)
+    
+    if (tab_income[i].s_state == nil and tab_charge[i].s_state ~= nil) then
+      result[2] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].s_state, tab_charge[i].s_score)
     else
-      result[2] = rules_analyzing(tab_income.s_state, tab_income.s_score, tab_charge.s_state, tab_charge.s_score)
+      result[2] = result[1]
     end
-    if (tab_charge.s_state == nil and not tab_income.s_state) then
-      result[3] = rules_analyzing(tab_income.f_state, tab_income.f_score, tab_charge.f_state, tab_charge.f_score)
+    
+    if (tab_income[i].s_state ~= nil and tab_charge[i].s_state == nil) then
+      result[3] = rules_analyzing(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].f_state, tab_charge[i].f_score)
     else
-      result[3] = rules_analyzing(tab_income.f_state, tab_income.f_score, tab_charge.s_state, tab_charge.s_score)
+      result[3] = result[1]
     end
-    if (tab_charge.s_state == nil and tab_income.s_state == nil) then
-      result[4] = rules_analyzing(tab_income.f_state, tab_income.f_score, tab_charge.f_state, tab_charge.f_score)
+    
+    if (tab_income[i].s_state ~= nil and tab_charge[i].s_state ~= nil) then
+      result[4] = rules_analyzing(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
     else
-      result[4] = rules_analyzing(tab_income.s_state, tab_income.s_score, tab_charge.f_state, tab_charge.f_score)
+      result[4] = result[1]
     end
+    
+    print(i .. ") States1", tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
+    print(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
+    print(("Result --> %s: %s"):format(result[1][1], result[1][2]))
+    print(("Result --> %s: %s"):format(result[2][1], result[2][2]))
+    print(("Result --> %s: %s"):format(result[3][1], result[3][2]))
+    print(("Result --> %s: %s\n"):format(result[4][1], result[4][2]))
+    table.insert(inference_tab, {
+        label = {result[1][1], result[2][1], result[3][1], result[4][1]},
+        value = {result[1][2], result[2][2], result[3][2], result[4][2]}
+      })
   end
+  
   -- eliminate duplicate with the highest score
-  for i=1, 4 do
+  for i, v in ipairs(inference_tab) do -- traversing 100 data
     for j=1, 4 do
-      if result[i][1] == result[j][1] then
-        if result[i][1] == "accepted" then
-          if result[i][2] > result[j][2] then
-            fin_result.accepted = result[i][2]
-          else
-            fin_result.accepted = result[j][2]
+      for k=1, 4 do
+        if (v.label[j] == "accepted") then -- accepted condition stable
+          if (v.label[j] == v.label[k]) and (v.value[j] > v.value[k]) then
+            if fin_result.accepted == nil then
+              fin_result.accepted = v.value[j]
+            elseif v.value[j] > fin_result.accepted then
+              fin_result.accepted = v.value[j]
+            end
+          elseif (v.label[j] == v.label[k]) then
+            if fin_result.accepted == nil then
+              fin_result.accepted = v.value[k]
+            elseif v.value[k] > fin_result.accepted then
+              fin_result.accepted = v.value[k]
+            end
           end
-        elseif result[i][1] == "consider" then
-          if result[i][2] > result[j][2] then
-            fin_result.consider = result[i][2]
-          else
-            fin_result.consider = result[j][2]
+          --print("accepted",fin_result.accepted)
+        elseif (v.label[j] == "consider") then
+          if ((v.label[j] == v.label[k])) and (v.value[j] > v.value[k]) then
+            if fin_result.consider == nil then
+              fin_result.consider = v.value[j]
+            elseif v.value[j] > fin_result.consider then
+              fin_result.consider = v.value[j]
+            end
+          elseif (v.label[j] == v.label[k]) then
+            if fin_result.consider == nil then
+              fin_result.consider = v.value[k]
+            elseif v.value[k] > fin_result.consider then
+              fin_result.consider = v.value[k]
+            end
           end
-        else
-          if result[i][2] > result[j][2] then
-            fin_result.rejected = result[i][2]
-          else
-            fin_result.rejected = result[j][2]
+          --print("consider",fin_result.consider)
+        elseif (v.label[j] == "rejected") then
+          if ((v.label[j] == v.label[k])) and (v.value[j] > v.value[k]) then
+            if fin_result.rejected == nil then
+              fin_result.rejected = v.value[j]
+            elseif v.value[j] > fin_result.rejected then
+              fin_result.rejected = v.value[j]
+            end
+          elseif (v.label[j] == v.label[k]) then
+            if fin_result.rejected == nil then
+              fin_result.rejected = v.value[k]
+            elseif v.value[k] > fin_result.rejected then
+              fin_result.rejected = v.value[k]
+            end
           end
+          --print("rejected",fin_result.rejected)
         end
       end
     end
+    
+    if fin_result.accepted == nil then
+      fin_result.accepted = find_val("accepted", inference_tab, 4)
+      if fin_result.accepted == nil then
+        fin_result.accepted = 0
+      end
+    end
+    if fin_result.consider == nil then
+      fin_result.consider = find_val("consider", inference_tab, 4)
+      if fin_result.consider == nil then
+        fin_result.consider = 0
+      end
+    end
+    if fin_result.rejected == nil then
+      fin_result.rejected = find_val("rejected", inference_tab, 4)
+      if fin_result.rejected == nil then
+        fin_result.rejected = 0
+      end
+    end
+    print((i ..") accepted: %s, consider: %s, rejected: %s"):
+      format(fin_result.accepted, fin_result.consider, fin_result.rejected))
+    
+    table.insert(family_result, {fin_result.accepted, fin_result.consider, fin_result.rejected})
+    
+    -- reset state
+    fin_result.accepted = nil
+    fin_result.consider = nil
+    fin_result.rejected = nil
   end
-  
-  if fin_result.accepted == nil then
-    fin_result.accepted = find_val("accpeted", result, 4)
-  elseif fin_result.consider == nil then
-    fin_result.consider = find_val("consider", result, 4)
-  elseif fin_result.rejected == nil then
-    fin_result.rejected = find_val("rejected", result, 4)
-  end
-  return fin_result
+  print "end inference"
 end
 
 local function defuzzification(acc, con, rej)
@@ -266,7 +329,7 @@ local function insertion_sort(tab)
   for i=2, #tab do
     local x = tab[i]
     local j = i-1
-    while (j > 0) and (tab[j].charge > x.charge) do
+    while (j > 0) and (tab[j].score < x.score) do
       tab[j+1] = tab[j]
       j = j - 1
     end
@@ -275,30 +338,27 @@ local function insertion_sort(tab)
 end
 
 local function fuzzy_logic()
-  --[[for i=math.random(1, 50), math.random(51, 100) do -- debugging and nothing
-    table.insert(family_selected, family_list[i])
-  end
-  insertion_sort(family_selected)]]
+  local tab_goal = {}
   for _, v in pairs(family_list) do
-    linguistic_var_income(v.income)
+    linguistic_var_income(v.income) -- fuzzification
     linguistic_var_charge(v.charge)
   end
-  print "debug"
-  for _, v in pairs(family_list) do
-    inference(family_process.income, family_process.charge)
+  
+  inference(family_process.income, family_process.charge)
+  
+  for i, v in ipairs(family_result) do
+    print(i .. ") SCORE:",defuzzification(family_result[i][1], family_result[i][2], family_result[i][3]))
+    table.insert(tab_goal, {id = i, score = defuzzification(family_result[i][1], family_result[i][2], family_result[i][3])})
   end
-  --[[print "-- debug income --"
-  for _, v in pairs(family_process.income) do
-    print(("Status1: %s Score1: %s Status2: %s Score2: %s"):format(v.f_state, v.f_score, v.s_state, v.s_score))
+  
+  insertion_sort(tab_goal)
+  
+  for i, v in ipairs(tab_goal) do
+    print(i .. ") " .. v.id, v.score)
   end
-  print "-- debug charge --"
-  for _, v in pairs(family_process.charge) do
-    print(("Status1: %s Score1: %s Status2: %s Score2: %s"):format(v.f_state, v.f_score, v.s_state, v.s_score))
-  end]]
 end
 
 -- main program
-math.randomseed(os.time())
 parse_CSV(QUEST_PATH)
 fuzzy_logic()
 table_to_CSV(ANSWER_PATH, family_selected)
