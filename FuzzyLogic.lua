@@ -7,7 +7,7 @@ local family_result = {}
 local family_selected = {}
 
 local QUEST_PATH = "DataTugas2.csv"
-local ANSWER_PATH = "D:/TelkomUniversity/AI/Tugas_FuzzyLogic/fuzzy-logic/TebakanTugas2.csv"
+local ANSWER_PATH = "/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv"
 
 -- @param table Print traverse of table
 local function print_famtable(table)
@@ -37,6 +37,7 @@ end
 -- @param sep Separator of file
 local function table_to_CSV(path, data_table, sep)
   --relative path:/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv
+  --relative path:D:/TelkomUniversity/AI/Tugas_FuzzyLogic/fuzzy-logic/TebakanTugas2.csv
   sep = sep or ','
   local file = assert(io.open(path, "w")) -- w mean write
   file:write("The 20 Selected Family:\n")
@@ -67,26 +68,27 @@ end
 
 -- @param x Calculate number from crisp value
 local function linguistic_var_income(x)
-  local curr_linguistic -- table that contain 4 key, saved in family_process.income
-  if x <= 0.35 then
+  local member = {0.35, 0.75, 1.35, 1.75}
+  local curr_linguistic
+  if x <= member[1] then
     curr_linguistic = {
         f_state = "poor", f_score = 1,
         s_state = nil, s_score = nil
-      } 
-  elseif x > 0.35 and x < 0.75 then
-    curr_linguistic = {
-        f_state = "poor", f_score = member_on_down(x, 0.35, 0.75),
-        s_state = "medium", s_score = member_on_up(x, 0.35, 0.75)
       }
-  elseif x >= 0.75 and x <= 1.35 then
+  elseif x > member[1] and x < member[2] then
+    curr_linguistic = {
+        f_state = "poor", f_score = member_on_down(x, member[1], member[2]),
+        s_state = "medium", s_score = member_on_up(x, member[1], member[2])
+      }
+  elseif x >= member[2] and x <= member[3] then
     curr_linguistic = {
         f_state = "medium", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif x > 1.35 and x < 1.75 then
+  elseif x > member[3] and x < member[4] then
     curr_linguistic = {
-        f_state = "medium", f_score = member_on_down(x, 1.35, 1.75),
-        s_state = "rich", s_score = member_on_up(x, 1.35, 1.75)
+        f_state = "medium", f_score = member_on_down(x, member[3], member[4]),
+        s_state = "rich", s_score = member_on_up(x, member[3], member[4])
       }
   else -- if x >= 1.75 and x <= 2 then
     curr_linguistic = {
@@ -98,46 +100,47 @@ local function linguistic_var_income(x)
 end
 
 local function linguistic_var_charge(y)
-  local curr_linguistic -- table that contain 4 key, saved in family_process.charge
-  if y <= 20 then
+  local member = {20, 30, 50, 60, 70, 80, 85, 95}
+  local curr_linguistic
+  if y <= member[1] then
     curr_linguistic = {
         f_state = "very low", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 20 and y < 30 then
+  elseif y > member[1] and y < member[2] then
     curr_linguistic = {
-        f_state = "very low", f_score = member_on_down(y, 20, 30),
-        s_state = "low", s_score = member_on_up(y, 20, 30)
+        f_state = "very low", f_score = member_on_down(y, member[1], member[2]),
+        s_state = "low", s_score = member_on_up(y, member[1], member[2])
       }
-  elseif y >= 30 and y <= 50 then
+  elseif y >= member[2] and y <= member[3] then
     curr_linguistic = {
         f_state = "low", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 50 and y < 60 then
+  elseif y > member[3] and y < member[4] then
     curr_linguistic = {
-        f_state = "low", f_score = member_on_down(y, 50, 60),
-        s_state = "average", s_score = member_on_up(y, 50, 60)
+        f_state = "low", f_score = member_on_down(y, member[3], member[4]),
+        s_state = "average", s_score = member_on_up(y, member[3], member[4])
       }
-  elseif y >= 60 and y <= 70 then
+  elseif y >= member[4] and y <= member[5] then
     curr_linguistic = {
         f_state = "average", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 70 and y < 80 then
+  elseif y > member[5] and y < member[6] then
     curr_linguistic = {
-        f_state = "average", f_score = member_on_down(y, 70, 80),
-        s_state = "high", s_score = member_on_up(y, 70, 80)
+        f_state = "average", f_score = member_on_down(y, member[5], member[6]),
+        s_state = "high", s_score = member_on_up(y, member[5], member[6])
       }
-  elseif y >= 80 and y <= 85 then
+  elseif y >= member[6] and y <= member[7] then
     curr_linguistic = {
         f_state = "high", f_score = 1,
         s_state = nil, s_score = nil
       }
-  elseif y > 90 and y < 95 then
+  elseif y > member[7] and y < member[8] then
     curr_linguistic = {
-        f_state = "high", f_score = member_on_down(y, 90, 95),
-        s_state = "very high", s_score = member_on_up(y, 90, 95)
+        f_state = "high", f_score = member_on_down(y, member[7], member[8]),
+        s_state = "very high", s_score = member_on_up(y, member[7], member[8])
       }
   else
     curr_linguistic = {
@@ -202,30 +205,34 @@ local function inference(tab_income, tab_charge)
     consider = nil,
     rejected = nil
   }
-  
+
   for i=1, #tab_income do
     result[1] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
-    
+
     if (tab_income[i].s_state == nil and tab_charge[i].s_state ~= nil) then
+      result[2] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].s_state, tab_charge[i].s_score)
+    elseif (tab_income[i].s_state ~= nil and tab_charge[i].s_state ~= nil) then
       result[2] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].s_state, tab_charge[i].s_score)
     else
       result[2] = result[1]
     end
-    
+
     if (tab_income[i].s_state ~= nil and tab_charge[i].s_state == nil) then
+      result[3] = rules_analyzing(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].f_state, tab_charge[i].f_score)
+    elseif (tab_income[i].s_state ~= nil and tab_charge[i].s_state ~= nil) then
       result[3] = rules_analyzing(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].f_state, tab_charge[i].f_score)
     else
       result[3] = result[1]
     end
-    
+
     if (tab_income[i].s_state ~= nil and tab_charge[i].s_state ~= nil) then
       result[4] = rules_analyzing(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
     else
       result[4] = result[1]
     end
-    
-    print(i .. ") States1", tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
-    print(tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
+
+    print(i .. ")\nStates1", tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
+    print("States2", tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
     print(("Result --> %s: %s"):format(result[1][1], result[1][2]))
     print(("Result --> %s: %s"):format(result[2][1], result[2][2]))
     print(("Result --> %s: %s"):format(result[3][1], result[3][2]))
@@ -235,7 +242,7 @@ local function inference(tab_income, tab_charge)
         value = {result[1][2], result[2][2], result[3][2], result[4][2]}
       })
   end
-  
+
   -- eliminate duplicate with the highest score
   for i, v in ipairs(inference_tab) do -- traversing 100 data
     for j=1, 4 do
@@ -288,7 +295,7 @@ local function inference(tab_income, tab_charge)
         end
       end
     end
-    
+
     if fin_result.accepted == nil then
       fin_result.accepted = find_val("accepted", inference_tab, 4)
       if fin_result.accepted == nil then
@@ -309,15 +316,14 @@ local function inference(tab_income, tab_charge)
     end
     print((i ..") accepted: %s, consider: %s, rejected: %s"):
       format(fin_result.accepted, fin_result.consider, fin_result.rejected))
-    
+
     table.insert(family_result, {fin_result.accepted, fin_result.consider, fin_result.rejected})
-    
+
     -- reset state
     fin_result.accepted = nil
     fin_result.consider = nil
     fin_result.rejected = nil
   end
-  print "end inference"
 end
 
 local function defuzzification(acc, con, rej)
@@ -336,28 +342,47 @@ local function insertion_sort(tab)
   end
 end
 
+local function label_defuzzification(score)
+  if score == 100 then
+    return "ACCEPTED"
+  elseif score > 50 and score < 100 then
+    return "CONSIDER"
+  else
+    return "REJECTED"
+  end
+end
+
 local function fuzzy_logic()
   local tab_goal = {}
   for _, v in pairs(family_list) do
     linguistic_var_income(v.income) -- fuzzification
     linguistic_var_charge(v.charge)
   end
-  
-  inference(family_process.income, family_process.charge)
-  
-  for i, v in ipairs(family_result) do
-    print(i .. ") SCORE:", defuzzification(family_result[i][1], family_result[i][2], family_result[i][3]))
-    table.insert(tab_goal, {id = i, score = defuzzification(family_result[i][1], family_result[i][2], family_result[i][3])})
+  print "end fuzzification"
+
+  inference(family_process.income, family_process.charge) -- inference
+  print "end inference"
+
+  for i, v in ipairs(family_result) do -- defuzzification
+    table.insert(tab_goal, {
+      id = i,
+      score = defuzzification(family_result[i][1], family_result[i][2], family_result[i][3])
+    })
+    print(i, tab_goal[i].score)
+    tab_goal[i].label = label_defuzzification(tab_goal[i].score)
   end
-  
+  print "end defuzzification"
+
   insertion_sort(tab_goal)
-  
+
   for i, v in ipairs(tab_goal) do
-    print(i .. ") " .. v.id, v.score)
+    print(i .. ") " .. v.id, v.score, v.label)
   end
-  
-  for i=1, 20 do -- saving data
-    table.insert(family_selected, tab_goal[i].id)
+
+  local i=1
+  while (#family_selected < 20) do
+    table.insert(family_selected, tab_goal[i].id) -- saving data
+    i = i + 1
   end
 end
 
