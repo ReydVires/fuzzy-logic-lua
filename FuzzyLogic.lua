@@ -1,10 +1,4 @@
-local family_list = {}
-local family_process = {
-  income = {},
-  charge = {}
-}
-local family_result = {}
-local family_selected = {}
+-- by Ahmad Arsyel (1301164193)
 
 local QUEST_PATH = "DataTugas2.csv"
 local ANSWER_PATH = "/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv"
@@ -18,7 +12,8 @@ end
 
 -- @param path Use your path for .csv file
 local function parse_CSV(path)
-  -- by Ahmad Arsyel (1301164193)
+  local family_list = {}
+  -- output will saved in family_list table
   for line in io.lines(path) do
     local col1, col2, col3 = line:match("%i*(.-),%s*(.-),%s*(.*)") -- converting
     family_list[#family_list + 1] = {
@@ -30,6 +25,7 @@ local function parse_CSV(path)
   table.remove(family_list, 1) -- remove the title/header
   --[[print("Parsing result:")
   print_famtable(family_list)]]
+  return family_list
 end
 
 -- @param path Use your own path for .csv raw file targeted
@@ -62,7 +58,6 @@ local function insertion_sort(tab)
   end
 end
 
--- @param a, b Returning the minimum value
 local function minim(a, b)
   if a > b then
     return b
@@ -79,8 +74,8 @@ local function member_on_down(x, on_top, to_low)
   return (to_low-x)/(to_low-on_top)
 end
 
--- @param x Calculate number from crisp value
-local function linguistic_var_income(x)
+-- @param x Calculate number from crisp value of income
+local function linguistic_var_income(x, fp) -- membership of income
   local member = {0.4, 0.8, 1.2, 1.6} -- lakukan analisis
   local curr_linguistic
   if x <= member[1] then
@@ -109,10 +104,11 @@ local function linguistic_var_income(x)
         s_state = nil, s_score = nil
       }
   end
-  table.insert(family_process.income, curr_linguistic)
+  table.insert(fp.income, curr_linguistic)
 end
 
-local function linguistic_var_charge(y)
+-- @param x Calculate number from crisp value of chare
+local function linguistic_var_charge(y, fp) -- membership of charge
   local member = {20, 30, 50, 60, 70, 80, 85, 95} -- lakukan analisis
   local curr_linguistic
   if y <= member[1] then
@@ -161,7 +157,7 @@ local function linguistic_var_charge(y)
         s_state = nil, s_score = nil
       }
   end
-  table.insert(family_process.charge, curr_linguistic)
+  table.insert(fp.charge, curr_linguistic)
 end
 
 local function rules_analyzing(income_state, income_score, charge_state, charge_score)
@@ -200,16 +196,6 @@ local function rules_analyzing(income_state, income_score, charge_state, charge_
   return curr_linscore
 end
 
-local function find_val(value, an_array, in_number)
-  for i=1, in_number do
-    if an_array[i][1] == value then
-      return an_array[i][2]
-    else
-      return nil
-    end
-  end
-end
-
 local function eliminating(label_j, label_k, score_j, score_k, tab)
   if (label_j == label_k) and (score_j > score_k) then
     if tab == nil then
@@ -227,6 +213,16 @@ local function eliminating(label_j, label_k, score_j, score_k, tab)
   return tab
 end
 
+local function find_val(value, an_array, in_number)
+  for i=1, in_number do
+    if an_array[i][1] == value then
+      return an_array[i][2]
+    else
+      return nil
+    end
+  end
+end
+
 local function convert_nil_to_zero(data, tab)
   if data == nil then
     data = find_val(str, tab, 4)
@@ -238,6 +234,7 @@ local function convert_nil_to_zero(data, tab)
 end
 
 local function inference(tab_income, tab_charge)
+  -- output will saved in family_result table
   local inference_tab = {}
   local result = {}
   local fin_result = {
@@ -245,6 +242,7 @@ local function inference(tab_income, tab_charge)
     consider = nil,
     rejected = nil
   }
+  local tab_result = {}
 
   for i=1, #tab_income do
     result[1] = rules_analyzing(tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
@@ -287,7 +285,7 @@ local function inference(tab_income, tab_charge)
   for i, v in ipairs(inference_tab) do -- traversing 100 data
     for j=1, 4 do
       for k=1, 4 do
-        if (v.label[j] == "accepted") then -- accepted condition stable
+        if (v.label[j] == "accepted") then
           fin_result.accepted = eliminating(
               v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
             )
@@ -295,7 +293,6 @@ local function inference(tab_income, tab_charge)
           fin_result.consider = eliminating(
               v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
             )
-          --print("consider",fin_result.consider)
         elseif (v.label[j] == "rejected") then
           fin_result.rejected = eliminating(
               v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
@@ -308,16 +305,17 @@ local function inference(tab_income, tab_charge)
     fin_result.consider = convert_nil_to_zero(fin_result.consider, inference_tab)
     fin_result.rejected = convert_nil_to_zero(fin_result.rejected, inference_tab)
 
-    print((i ..") accepted: %s, consider: %s, rejected: %s"):
-      format(fin_result.accepted, fin_result.consider, fin_result.rejected))
+    --[[print((i ..") accepted: %s, consider: %s, rejected: %s"):
+      format(fin_result.accepted, fin_result.consider, fin_result.rejected))]]
 
-    table.insert(family_result, {fin_result.accepted, fin_result.consider, fin_result.rejected})
+    table.insert(tab_result, {fin_result.accepted, fin_result.consider, fin_result.rejected})
 
     -- reset state
     fin_result.accepted = nil
     fin_result.consider = nil
     fin_result.rejected = nil
   end
+  return  tab_result
 end
 
 local function sugeno_func(acc, con, rej)
@@ -347,20 +345,26 @@ local function defuzzification(tab)
   return goals
 end
 
-local function membership(list)
-  --output will saved in family_process table
+local function membership(list, fp)
+  -- output will saved in family_process table
   for _, v in pairs(list) do
-    linguistic_var_income(v.income)
-    linguistic_var_charge(v.charge)
+    linguistic_var_income(v.income, fp)
+    linguistic_var_charge(v.charge, fp)
   end
 end
 
-local function fuzzy_logic()
+local function fuzzy_logic(fl)
   local tab_goal = {}
+  local family_process = {
+    income = {},
+    charge = {}
+  }
+  local family_result = {}
+  local family_selected = {}
 
-  membership(family_list) -- fuzzification
+  membership(fl, family_process) -- fuzzification
 
-  inference(family_process.income, family_process.charge) -- inference
+  family_result = inference(family_process.income, family_process.charge) -- inference
 
   tab_goal = defuzzification(family_result) -- defuzzification
 
@@ -372,12 +376,13 @@ local function fuzzy_logic()
 
   local i=1
   while (#family_selected < 20) do -- picking 20 first family of fittest
-    table.insert(family_selected, tab_goal[i].id) -- saving data
+    table.insert(family_selected, tab_goal[i].id) -- saving data to family_selected
     i = i + 1
   end
+  return family_selected
 end
 
 -- main program
-parse_CSV(QUEST_PATH)
-fuzzy_logic()
-table_to_CSV(ANSWER_PATH, family_selected)
+local families = parse_CSV(QUEST_PATH)
+local helped_family = fuzzy_logic(families)
+table_to_CSV(ANSWER_PATH, helped_family)
