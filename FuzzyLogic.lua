@@ -28,8 +28,8 @@ local function parse_CSV(path)
     }
   end
   table.remove(family_list, 1) -- remove the title/header
-  print("Parsing result:")
-  print_famtable(family_list)
+  --[[print("Parsing result:")
+  print_famtable(family_list)]]
 end
 
 -- @param path Use your own path for .csv raw file targeted
@@ -47,6 +47,19 @@ local function table_to_CSV(path, data_table, sep)
   end
   file:close()
   print("file saved")
+end
+----------
+
+local function insertion_sort(tab)
+  for i=2, #tab do
+    local x = tab[i]
+    local j = i-1
+    while (j > 0) and (tab[j].score < x.score) do
+      tab[j+1] = tab[j]
+      j = j - 1
+    end
+    tab[j+1] = x
+  end
 end
 
 -- @param a, b Returning the minimum value
@@ -68,7 +81,7 @@ end
 
 -- @param x Calculate number from crisp value
 local function linguistic_var_income(x)
-  local member = {0.35, 0.75, 1.35, 1.75}
+  local member = {0.4, 0.8, 1.2, 1.6} -- lakukan analisis
   local curr_linguistic
   if x <= member[1] then
     curr_linguistic = {
@@ -100,7 +113,7 @@ local function linguistic_var_income(x)
 end
 
 local function linguistic_var_charge(y)
-  local member = {20, 30, 50, 60, 70, 80, 85, 95}
+  local member = {20, 30, 50, 60, 70, 80, 85, 95} -- lakukan analisis
   local curr_linguistic
   if y <= member[1] then
     curr_linguistic = {
@@ -197,6 +210,33 @@ local function find_val(value, an_array, in_number)
   end
 end
 
+local function eliminating(label_j, label_k, score_j, score_k, tab)
+  if (label_j == label_k) and (score_j > score_k) then
+    if tab == nil then
+      tab = score_j
+    elseif score_j > tab then
+      tab = score_j
+    end
+  elseif (label_j == label_k) then
+    if tab == nil then
+      tab = score_k
+    elseif score_k > tab then
+      tab = score_k
+    end
+  end
+  return tab
+end
+
+local function convert_nil_to_zero(data, tab)
+  if data == nil then
+    data = find_val(str, tab, 4)
+    if data == nil then
+      data = 0
+    end
+  end
+  return data
+end
+
 local function inference(tab_income, tab_charge)
   local inference_tab = {}
   local result = {}
@@ -231,89 +271,43 @@ local function inference(tab_income, tab_charge)
       result[4] = result[1]
     end
 
-    print(i .. ")\nStates1", tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
+    --[[print(i .. ")\nStates1", tab_income[i].f_state, tab_income[i].f_score, tab_charge[i].f_state, tab_charge[i].f_score)
     print("States2", tab_income[i].s_state, tab_income[i].s_score, tab_charge[i].s_state, tab_charge[i].s_score)
     print(("Result --> %s: %s"):format(result[1][1], result[1][2]))
     print(("Result --> %s: %s"):format(result[2][1], result[2][2]))
     print(("Result --> %s: %s"):format(result[3][1], result[3][2]))
-    print(("Result --> %s: %s\n"):format(result[4][1], result[4][2]))
+    print(("Result --> %s: %s\n"):format(result[4][1], result[4][2]))]]
     table.insert(inference_tab, {
         label = {result[1][1], result[2][1], result[3][1], result[4][1]},
         value = {result[1][2], result[2][2], result[3][2], result[4][2]}
       })
   end
 
-  -- eliminate duplicate with the highest score
+  -- eliminate duplicate with the highest score, cross product/combination
   for i, v in ipairs(inference_tab) do -- traversing 100 data
     for j=1, 4 do
       for k=1, 4 do
         if (v.label[j] == "accepted") then -- accepted condition stable
-          if (v.label[j] == v.label[k]) and (v.value[j] > v.value[k]) then
-            if fin_result.accepted == nil then
-              fin_result.accepted = v.value[j]
-            elseif v.value[j] > fin_result.accepted then
-              fin_result.accepted = v.value[j]
-            end
-          elseif (v.label[j] == v.label[k]) then
-            if fin_result.accepted == nil then
-              fin_result.accepted = v.value[k]
-            elseif v.value[k] > fin_result.accepted then
-              fin_result.accepted = v.value[k]
-            end
-          end
-          --print("accepted",fin_result.accepted)
+          fin_result.accepted = eliminating(
+              v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
+            )
         elseif (v.label[j] == "consider") then
-          if ((v.label[j] == v.label[k])) and (v.value[j] > v.value[k]) then
-            if fin_result.consider == nil then
-              fin_result.consider = v.value[j]
-            elseif v.value[j] > fin_result.consider then
-              fin_result.consider = v.value[j]
-            end
-          elseif (v.label[j] == v.label[k]) then
-            if fin_result.consider == nil then
-              fin_result.consider = v.value[k]
-            elseif v.value[k] > fin_result.consider then
-              fin_result.consider = v.value[k]
-            end
-          end
+          fin_result.consider = eliminating(
+              v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
+            )
           --print("consider",fin_result.consider)
         elseif (v.label[j] == "rejected") then
-          if ((v.label[j] == v.label[k])) and (v.value[j] > v.value[k]) then
-            if fin_result.rejected == nil then
-              fin_result.rejected = v.value[j]
-            elseif v.value[j] > fin_result.rejected then
-              fin_result.rejected = v.value[j]
-            end
-          elseif (v.label[j] == v.label[k]) then
-            if fin_result.rejected == nil then
-              fin_result.rejected = v.value[k]
-            elseif v.value[k] > fin_result.rejected then
-              fin_result.rejected = v.value[k]
-            end
-          end
-          --print("rejected",fin_result.rejected)
+          fin_result.rejected = eliminating(
+              v.label[j], v.label[k], v.value[j], v.value[k], fin_result[v.label[j]]
+            )
         end
       end
     end
+    -- converting nil value into 0 (zero)
+    fin_result.accepted = convert_nil_to_zero(fin_result.accepted, inference_tab)
+    fin_result.consider = convert_nil_to_zero(fin_result.consider, inference_tab)
+    fin_result.rejected = convert_nil_to_zero(fin_result.rejected, inference_tab)
 
-    if fin_result.accepted == nil then
-      fin_result.accepted = find_val("accepted", inference_tab, 4)
-      if fin_result.accepted == nil then
-        fin_result.accepted = 0
-      end
-    end
-    if fin_result.consider == nil then
-      fin_result.consider = find_val("consider", inference_tab, 4)
-      if fin_result.consider == nil then
-        fin_result.consider = 0
-      end
-    end
-    if fin_result.rejected == nil then
-      fin_result.rejected = find_val("rejected", inference_tab, 4)
-      if fin_result.rejected == nil then
-        fin_result.rejected = 0
-      end
-    end
     print((i ..") accepted: %s, consider: %s, rejected: %s"):
       format(fin_result.accepted, fin_result.consider, fin_result.rejected))
 
@@ -326,20 +320,8 @@ local function inference(tab_income, tab_charge)
   end
 end
 
-local function defuzzification(acc, con, rej)
+local function sugeno_func(acc, con, rej)
   return (acc*100 + con*75 + rej*50)/(acc+con+rej)
-end
-
-local function insertion_sort(tab)
-  for i=2, #tab do
-    local x = tab[i]
-    local j = i-1
-    while (j > 0) and (tab[j].score < x.score) do
-      tab[j+1] = tab[j]
-      j = j - 1
-    end
-    tab[j+1] = x
-  end
 end
 
 local function label_defuzzification(score)
@@ -352,35 +334,44 @@ local function label_defuzzification(score)
   end
 end
 
-local function fuzzy_logic()
-  local tab_goal = {}
-  for _, v in pairs(family_list) do
-    linguistic_var_income(v.income) -- fuzzification
+local function defuzzification(tab)
+  local goals = {}
+  for i, v in ipairs(tab) do
+    table.insert(goals, {
+      id = i,
+      score = sugeno_func(tab[i][1], tab[i][2], tab[i][3])
+    })
+    print(i, goals[i].score)
+    goals[i].label = label_defuzzification(goals[i].score)
+  end
+  return goals
+end
+
+local function membership(list)
+  --output will saved in family_process table
+  for _, v in pairs(list) do
+    linguistic_var_income(v.income)
     linguistic_var_charge(v.charge)
   end
-  print "end fuzzification"
+end
+
+local function fuzzy_logic()
+  local tab_goal = {}
+
+  membership(family_list) -- fuzzification
 
   inference(family_process.income, family_process.charge) -- inference
-  print "end inference"
 
-  for i, v in ipairs(family_result) do -- defuzzification
-    table.insert(tab_goal, {
-      id = i,
-      score = defuzzification(family_result[i][1], family_result[i][2], family_result[i][3])
-    })
-    print(i, tab_goal[i].score)
-    tab_goal[i].label = label_defuzzification(tab_goal[i].score)
-  end
-  print "end defuzzification"
+  tab_goal = defuzzification(family_result) -- defuzzification
 
-  insertion_sort(tab_goal)
+  insertion_sort(tab_goal) -- sorting from the highest score
 
   for i, v in ipairs(tab_goal) do
     print(i .. ") " .. v.id, v.score, v.label)
   end
 
   local i=1
-  while (#family_selected < 20) do
+  while (#family_selected < 20) do -- picking 20 first family of fittest
     table.insert(family_selected, tab_goal[i].id) -- saving data
     i = i + 1
   end
