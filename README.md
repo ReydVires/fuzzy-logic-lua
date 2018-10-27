@@ -1,4 +1,4 @@
 # fuzzy-logic
-Ahmad Arsyel (1301164193)
+Ahmad Arsyel
 
-The second task of Artificial Intelligence
+Task of Artificial Intelligence
