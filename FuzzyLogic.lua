@@ -37,7 +37,6 @@ local function table_to_CSV(path, data_table, sep)
   --relative path:D:/TelkomUniversity/AI/Tugas_FuzzyLogic/fuzzy-logic/TebakanTugas2.csv
   sep = sep or ','
   local file = assert(io.open(path, "w")) -- w mean write
-  file:write("The 20 Selected Family:\n")
   for _, v in ipairs(data_table) do
     file:write(v)
     file:write('\n')
