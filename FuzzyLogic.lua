@@ -1,7 +1,8 @@
 -- by Ahmad Arsyel (1301164193)
 
 local QUEST_PATH = "DataTugas2.csv"
-local ANSWER_PATH = "/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv"
+--local ANSWER_PATH = "/home/reydvires/Development/Lua Project/FuzzyLogic/TebakanTugas2.csv"
+local ANSWER_PATH = "D:/TelkomUniversity/AI/Tugas_FuzzyLogic/fuzzy-logic/TebakanTugas2.csv"
 
 -- @param table Print traverse of table
 local function print_famtable(table)
@@ -160,7 +161,7 @@ local function linguistic_var_charge(y, fp) -- membership of charge
   table.insert(fp.charge, curr_linguistic)
 end
 
-local function rules_analyzing(income_state, income_score, charge_state, charge_score)
+local function rules_analyzing(income_state, income_score, charge_state, charge_score) -- lakukan analisis
   local curr_linscore = nil
   if (income_state == "poor" and charge_state == "very low") then
     curr_linscore = {"consider", minim(income_score, charge_score)}
@@ -319,13 +320,13 @@ local function inference(tab_income, tab_charge)
 end
 
 local function sugeno_func(acc, con, rej)
-  return (acc*100 + con*75 + rej*50)/(acc+con+rej)
+  return (acc*100 + con*65 + rej*10)/(acc+con+rej) -- lakukan analisis
 end
 
 local function label_defuzzification(score)
   if score == 100 then
     return "ACCEPTED"
-  elseif score > 50 and score < 100 then
+  elseif score > 10 and score < 100 then
     return "CONSIDER"
   else
     return "REJECTED"
